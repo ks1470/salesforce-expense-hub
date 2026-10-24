@@ -1,0 +1,880 @@
+<apex:page standardStylesheets="false" showHeader="false" sidebar="false" docType="html-5.0">
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Executive Finance &amp; Daily Transactions Dashboard</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <!-- Google Fonts: Plus Jakarta Sans -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="anonymous" />
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&amp;display=swap" rel="stylesheet" />
+    <style>
+        :root {
+            --color-coffee: #6F4E37;
+            --color-coffee-dark: #4D3321;
+            --color-coffee-light: #8E684D;
+            --color-platinum: #E5E4E2;
+            --color-platinum-light: #F4F3F1;
+            --color-lavender: #E6E0F0;
+            --color-lavender-dark: #7A6990;
+            --color-text-main: #2E1E14;
+            --color-text-muted: #7A6F68;
+        }
+
+        body {
+            font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: linear-gradient(135deg, #FBFBFA 0%, #F5F2F8 50%, #ECE8EE 100%);
+            color: var(--color-text-main);
+            min-height: 100vh;
+        }
+
+        .card-surface {
+            background: #FFFFFF;
+            border: 1.5px solid var(--color-platinum);
+            box-shadow: 0 8px 30px -4px rgba(111, 78, 55, 0.06), 0 2px 6px -1px rgba(0, 0, 0, 0.02);
+            transition: all 0.25s ease;
+        }
+
+        .card-surface:hover {
+            border-color: #D2CFCC;
+            box-shadow: 0 12px 36px -4px rgba(111, 78, 55, 0.1);
+        }
+
+        .card-hero-coffee {
+            background: linear-gradient(135deg, #6F4E37 0%, #4D3321 100%);
+            border: 1px solid rgba(229, 228, 226, 0.35);
+            box-shadow: 0 12px 32px -4px rgba(111, 78, 55, 0.35);
+            color: #FFFFFF;
+        }
+
+        .card-sub {
+            background: var(--color-platinum-light);
+            border: 1px solid var(--color-platinum);
+        }
+
+        .pill-lavender {
+            background: var(--color-lavender);
+            color: var(--color-coffee);
+            border: 1px solid #D6CEE5;
+        }
+
+        .btn-coffee {
+            background: linear-gradient(135deg, #6F4E37 0%, #523825 100%);
+            color: #FFFFFF;
+            box-shadow: 0 6px 18px -2px rgba(111, 78, 55, 0.3);
+            transition: all 0.2s ease;
+        }
+
+        .btn-coffee:hover {
+            background: linear-gradient(135deg, #5B402D 0%, #3F291A 100%);
+            transform: translateY(-1px);
+            box-shadow: 0 8px 22px -2px rgba(111, 78, 55, 0.4);
+        }
+
+        .btn-platinum {
+            background: #FFFFFF;
+            color: var(--color-coffee);
+            border: 1.5px solid var(--color-platinum);
+            transition: all 0.2s ease;
+        }
+
+        .btn-platinum:hover {
+            background: var(--color-platinum-light);
+            border-color: #D2CFCC;
+        }
+
+        /* Custom scrollbar */
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: #F0EDEB; }
+        ::-webkit-scrollbar-thumb { background: #C5BFBA; border-radius: 3px; }
+        ::-webkit-scrollbar-thumb:hover { background: #9E958E; }
+    </style>
+</head>
+<body class="p-4 sm:p-6 lg:p-8">
+    <div class="max-w-7xl mx-auto space-y-6">
+
+        <!-- ========================================================= -->
+        <!-- 1. TOP HEADER AND CONTROLS                                -->
+        <!-- ========================================================= -->
+        <header class="card-surface p-5 sm:p-6 rounded-3xl flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div class="flex items-center space-x-4">
+                <div class="w-12 h-12 rounded-2xl flex items-center justify-center text-white text-2xl shadow-lg shadow-[#6F4E37]/30" style="background: linear-gradient(135deg, #6F4E37 0%, #4D3321 100%);">
+                    ☁️
+                </div>
+                <div>
+                    <div class="flex items-center gap-2.5">
+                        <h1 class="text-xl sm:text-2xl font-black tracking-tight" style="color: #2E1E14;">Daily Transactions Dashboard</h1>
+                        <span class="inline-flex items-center gap-1.5 px-3 py-0.5 rounded-full text-[11px] font-extrabold pill-lavender">
+                            <span class="w-1.5 h-1.5 rounded-full bg-[#6F4E37] animate-pulse"></span>
+                            Live Salesforce Sync
+                        </span>
+                    </div>
+                    <p class="text-xs sm:text-sm font-medium mt-0.5" style="color: #7A6F68;">
+                        Real-time analytics for <code class="px-1.5 py-0.5 rounded font-mono font-bold" style="background: #E6E0F0; color: #6F4E37;">Daily_Transaction__c</code>
+                    </p>
+                </div>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="flex flex-wrap items-center gap-2.5">
+                <button onclick="openAddModal()" class="px-4 py-2.5 btn-coffee text-xs font-extrabold rounded-xl active:scale-95 flex items-center gap-1.5">
+                    <span>⚡ Quick Log Entry</span>
+                </button>
+                <button onclick="exportCSV()" class="px-3.5 py-2.5 btn-platinum text-xs font-bold rounded-xl active:scale-95 flex items-center gap-1.5">
+                    <span>📥 Export CSV</span>
+                </button>
+                <button onclick="refreshData()" id="refreshBtn" class="px-3.5 py-2.5 btn-platinum text-xs font-bold rounded-xl active:scale-95 flex items-center gap-1.5">
+                    <span id="refreshIcon" class="inline-block transition-transform">🔄</span>
+                    <span>Refresh</span>
+                </button>
+                <a href="/lightning/o/Daily_Transaction__c/list?filterName=All" target="_blank" class="px-3.5 py-2.5 text-xs font-extrabold rounded-xl transition flex items-center gap-1" style="background: #E6E0F0; color: #6F4E37; border: 1px solid #D6CEE5;">
+                    <span>Salesforce List</span>
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg>
+                </a>
+            </div>
+        </header>
+
+        <!-- ========================================================= -->
+        <!-- 2. EXECUTIVE KPI METRICS (4 CARDS)                        -->
+        <!-- ========================================================= -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5">
+            <!-- 1. Total Income -->
+            <div class="card-surface p-5 rounded-2xl relative overflow-hidden group">
+                <div class="flex items-center justify-between mb-3">
+                    <span class="text-xs font-extrabold uppercase tracking-wider text-emerald-700 flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-emerald-50 border border-emerald-200">
+                        <span class="w-2 h-2 rounded-full bg-emerald-600"></span> Total Income
+                    </span>
+                    <span class="w-8 h-8 rounded-xl flex items-center justify-center text-sm font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">💰</span>
+                </div>
+                <div id="totIncome" class="text-2xl sm:text-3xl font-black tracking-tight" style="color: #2E1E14;">₹0.00</div>
+                <div class="flex items-center justify-between mt-3 text-xs pt-3 border-t border-[#E5E4E2]">
+                    <span id="totIncomeCount" class="font-bold text-emerald-700">0 Inflow Records</span>
+                    <span class="text-emerald-700 font-extrabold">↓ Active Inflow</span>
+                </div>
+            </div>
+
+            <!-- 2. Total Expenses -->
+            <div class="card-surface p-5 rounded-2xl relative overflow-hidden group">
+                <div class="flex items-center justify-between mb-3">
+                    <span class="text-xs font-extrabold uppercase tracking-wider text-rose-700 flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-rose-50 border border-rose-200">
+                        <span class="w-2 h-2 rounded-full bg-rose-600"></span> Total Expenses
+                    </span>
+                    <span class="w-8 h-8 rounded-xl flex items-center justify-center text-sm font-bold bg-rose-50 text-rose-700 border border-rose-200">💸</span>
+                </div>
+                <div id="totExpense" class="text-2xl sm:text-3xl font-black tracking-tight" style="color: #2E1E14;">₹0.00</div>
+                <div class="flex items-center justify-between mt-3 text-xs pt-3 border-t border-[#E5E4E2]">
+                    <span id="totExpenseCount" class="font-bold text-rose-700">0 Outflow Records</span>
+                    <span class="text-rose-700 font-extrabold">↑ Outflow Only</span>
+                </div>
+            </div>
+
+            <!-- 3. Net Balance (Signature Coffee Luxury Hero Card) -->
+            <div class="card-hero-coffee p-5 rounded-2xl relative overflow-hidden group">
+                <div class="flex items-center justify-between mb-3">
+                    <span class="text-xs font-extrabold uppercase tracking-wider text-[#E5E4E2] flex items-center gap-1.5">
+                        <span class="w-2 h-2 rounded-full bg-emerald-400"></span> Net Savings (Bachat)
+                    </span>
+                    <span class="px-2.5 py-0.5 rounded-full text-[11px] font-black" style="background: #E6E0F0; color: #6F4E37;">
+                        ✨ Live
+                    </span>
+                </div>
+                <div id="netBalance" class="text-2xl sm:text-3xl font-black text-white tracking-tight">+₹0.00</div>
+                <div class="flex items-center justify-between mt-3 text-xs pt-3 border-t border-white/20">
+                    <span id="savingsRate" class="font-extrabold text-[#E5E4E2]">0% Savings Rate</span>
+                    <span id="balanceStatus" class="font-black px-2 py-0.5 rounded-md text-[10px]" style="background: rgba(230, 224, 240, 0.25); color: #E5E4E2;">Surplus</span>
+                </div>
+            </div>
+
+            <!-- 4. Top Category & Daily Average Spend (Accurate Real Metrics - No 30k Dummy) -->
+            <div class="card-surface p-5 rounded-2xl relative overflow-hidden group">
+                <div class="flex items-center justify-between mb-2">
+                    <span class="text-xs font-extrabold uppercase tracking-wider flex items-center gap-1.5 px-2.5 py-0.5 rounded-full" style="background: #E6E0F0; color: #6F4E37; border: 1px solid #D6CEE5;">
+                        <span class="w-2 h-2 rounded-full" style="background: #6F4E37;"></span> Top Spending
+                    </span>
+                    <span class="w-8 h-8 rounded-xl flex items-center justify-center text-sm font-bold" style="background: #E6E0F0; color: #6F4E37; border: 1px solid #D6CEE5;">📊</span>
+                </div>
+                <div class="mt-1">
+                    <div id="topCategoryName" class="text-xl sm:text-2xl font-black tracking-tight truncate" style="color: #2E1E14;">Groceries</div>
+                    <div id="topCategoryAmount" class="text-xs font-bold mt-0.5" style="color: #6F4E37;">₹0.00 (0% of expenses)</div>
+                </div>
+                <div class="flex items-center justify-between mt-3 text-xs pt-3 border-t border-[#E5E4E2]">
+                    <span id="dailyAverageSpend" class="font-semibold" style="color: #7A6F68;">Avg ₹0 / day</span>
+                    <span class="font-bold px-2 py-0.5 rounded-md text-[10px]" style="background: #F4F3F1; color: #6F4E37; border: 1px solid #E5E4E2;">Analysis</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- ========================================================= -->
+        <!-- 3. INTERACTIVE VISUAL ANALYTICS (CHARTS)                  -->
+        <!-- ========================================================= -->
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-5">
+            <!-- Left: Cash Flow Comparison Bar Chart -->
+            <div class="card-surface p-5 sm:p-6 rounded-3xl lg:col-span-7 flex flex-col justify-between">
+                <div class="flex items-center justify-between mb-4">
+                    <div>
+                        <h2 class="text-sm sm:text-base font-extrabold flex items-center gap-2" style="color: #2E1E14;">
+                            <span>📊 Cash Flow Comparison</span>
+                        </h2>
+                        <p class="text-xs font-medium mt-0.5" style="color: #7A6F68;">Income Inflow vs Expense Outflow ratio</p>
+                    </div>
+                    <div class="flex items-center gap-3 text-xs font-bold">
+                        <span class="flex items-center gap-1.5" style="color: #6F4E37;"><span class="w-2.5 h-2.5 rounded-full" style="background: #6F4E37;"></span> Income</span>
+                        <span class="flex items-center gap-1.5 text-rose-600"><span class="w-2.5 h-2.5 rounded-full bg-rose-500"></span> Expense</span>
+                    </div>
+                </div>
+                <div class="h-64 sm:h-72 w-full relative">
+                    <canvas id="barChart"></canvas>
+                </div>
+            </div>
+
+            <!-- Right: Category Donut Chart (Chic Coffee & Lavender Palette) -->
+            <div class="card-surface p-5 sm:p-6 rounded-3xl lg:col-span-5 flex flex-col justify-between">
+                <div class="flex items-center justify-between mb-4">
+                    <div>
+                        <h2 class="text-sm sm:text-base font-extrabold flex items-center gap-2" style="color: #2E1E14;">
+                            <span>🍩 Spending by Category</span>
+                        </h2>
+                        <p class="text-xs font-medium mt-0.5" style="color: #7A6F68;">Breakdown of outbound expenses</p>
+                    </div>
+                    <span id="catTotalBadge" class="text-xs font-extrabold px-3 py-1 rounded-xl pill-lavender">
+                        0 Categories
+                    </span>
+                </div>
+                <div class="h-64 sm:h-72 w-full relative flex items-center justify-center">
+                    <canvas id="donutChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- ========================================================= -->
+        <!-- 4. EXPENSES BY PAYMENT CHANNELS (OUTFLOW ONLY - NO 23K)  -->
+        <!-- ========================================================= -->
+        <div>
+            <div class="flex items-center justify-between mb-3 px-1">
+                <h3 class="text-xs sm:text-sm font-extrabold uppercase tracking-wider" style="color: #6F4E37;">
+                    💳 Expense Outflow by Payment Channel
+                </h3>
+                <span class="text-[11px] font-semibold text-slate-500">Exclusive of Income</span>
+            </div>
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <div class="card-surface p-4 rounded-2xl flex items-center justify-between">
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 rounded-xl flex items-center justify-center font-black text-lg" style="background: #E6E0F0; color: #6F4E37; border: 1px solid #D6CEE5;">
+                            ⚡
+                        </div>
+                        <div>
+                            <div class="text-[11px] font-extrabold uppercase" style="color: #7A6F68;">UPI Expenses</div>
+                            <div id="upiTotal" class="text-lg font-black mt-0.5" style="color: #2E1E14;">₹0.00</div>
+                        </div>
+                    </div>
+                    <span id="upiCount" class="text-xs font-extrabold px-2.5 py-1 rounded-lg pill-lavender">0 Records</span>
+                </div>
+
+                <div class="card-surface p-4 rounded-2xl flex items-center justify-between">
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 rounded-xl flex items-center justify-center font-black text-lg" style="background: #F4F3F1; color: #6F4E37; border: 1px solid #E5E4E2;">
+                            💳
+                        </div>
+                        <div>
+                            <div class="text-[11px] font-extrabold uppercase" style="color: #7A6F68;">Card Expenses</div>
+                            <div id="cardTotal" class="text-lg font-black mt-0.5" style="color: #2E1E14;">₹0.00</div>
+                        </div>
+                    </div>
+                    <span id="cardCount" class="text-xs font-bold px-2.5 py-1 rounded-lg" style="background: #F4F3F1; color: #7A6F68; border: 1px solid #E5E4E2;">0 Records</span>
+                </div>
+
+                <div class="card-surface p-4 rounded-2xl flex items-center justify-between">
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 rounded-xl flex items-center justify-center font-black text-lg" style="background: #F4F3F1; color: #6F4E37; border: 1px solid #E5E4E2;">
+                            💵
+                        </div>
+                        <div>
+                            <div class="text-[11px] font-extrabold uppercase" style="color: #7A6F68;">Cash Expenses</div>
+                            <div id="cashTotal" class="text-lg font-black mt-0.5" style="color: #2E1E14;">₹0.00</div>
+                        </div>
+                    </div>
+                    <span id="cashCount" class="text-xs font-bold px-2.5 py-1 rounded-lg" style="background: #F4F3F1; color: #7A6F68; border: 1px solid #E5E4E2;">0 Records</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- ========================================================= -->
+        <!-- 5. LIVE TRANSACTIONS DATA TABLE WITH SEARCH AND FILTER    -->
+        <!-- ========================================================= -->
+        <div class="card-surface rounded-3xl overflow-hidden">
+            <!-- Table Header and Filters -->
+            <div class="p-5 sm:p-6 border-b border-[#E5E4E2] flex flex-col md:flex-row md:items-center justify-between gap-4">
+                <div>
+                    <h2 class="text-base sm:text-lg font-extrabold flex items-center gap-2" style="color: #2E1E14;">
+                        <span>📝 Live Transactions Feed</span>
+                        <span id="tableRecordCount" class="text-xs font-bold px-2.5 py-0.5 rounded-full pill-lavender">0 Total</span>
+                    </h2>
+                    <p class="text-xs font-medium mt-0.5" style="color: #7A6F68;">Chronological real-time ledger</p>
+                </div>
+
+                <!-- Filters and Search -->
+                <div class="flex flex-wrap items-center gap-3">
+                    <!-- Search Input -->
+                    <div class="relative w-full sm:w-64">
+                        <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-slate-400 text-xs">🔍</span>
+                        <input type="text" id="searchInput" oninput="filterTable()" placeholder="Search category, note, amount..." class="w-full pl-8 pr-3 py-2 text-xs rounded-xl border border-[#E5E4E2] focus:outline-none focus:border-[#6F4E37] transition font-medium" style="background: #FAF9F7; color: #2E1E14;" />
+                    </div>
+
+                    <!-- Type Filter Pills -->
+                    <div class="flex items-center p-1 rounded-xl border border-[#E5E4E2] text-xs font-bold" style="background: #F4F3F1;">
+                        <button onclick="setTypeFilter('All')" id="filterAll" class="px-3 py-1.5 rounded-lg text-white transition font-bold" style="background: #6F4E37;">All</button>
+                        <button onclick="setTypeFilter('Income')" id="filterIncome" class="px-3 py-1.5 rounded-lg transition font-bold" style="color: #7A6F68;">Income</button>
+                        <button onclick="setTypeFilter('Expense')" id="filterExpense" class="px-3 py-1.5 rounded-lg transition font-bold" style="color: #7A6F68;">Expense</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Table Container -->
+            <div class="overflow-x-auto">
+                <table class="w-full text-left text-xs">
+                    <thead class="uppercase font-extrabold tracking-wider border-b border-[#E5E4E2]" style="background: #F8F7F5; color: #6F4E37;">
+                        <tr>
+                            <th class="px-6 py-3.5">Record / Date</th>
+                            <th class="px-6 py-3.5">Type</th>
+                            <th class="px-6 py-3.5">Category</th>
+                            <th class="px-6 py-3.5">Payment Mode</th>
+                            <th class="px-6 py-3.5">Notes</th>
+                            <th class="px-6 py-3.5 text-right">Amount (₹)</th>
+                        </tr>
+                    </thead>
+                    <tbody id="recordsBody" class="divide-y divide-[#E5E4E2] font-medium">
+                        <tr>
+                            <td colspan="6" class="p-8 text-center text-slate-400 font-semibold">
+                                <div class="inline-block animate-spin text-xl mb-2">⏳</div>
+                                <div>Loading live Salesforce records...</div>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- ========================================================= -->
+    <!-- 6. QUICK LOG ENTRY MODAL                                  -->
+    <!-- ========================================================= -->
+    <div id="addModal" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white w-full max-w-md rounded-3xl p-6 border border-[#E5E4E2] shadow-2xl space-y-4">
+            <div class="flex items-center justify-between pb-3 border-b border-[#E5E4E2]">
+                <div>
+                    <h3 class="text-lg font-black" style="color: #2E1E14;">Log Live Transaction</h3>
+                    <p class="text-xs" style="color: #7A6F68;">Syncs directly to Daily_Transaction__c</p>
+                </div>
+                <button onclick="closeAddModal()" class="w-8 h-8 rounded-full btn-platinum flex items-center justify-center font-bold">✕</button>
+            </div>
+
+            <div class="space-y-3.5">
+                <!-- Type Toggle -->
+                <div class="flex p-1 rounded-xl border border-[#E5E4E2]" style="background: #F4F3F1;">
+                    <button type="button" id="modalTypeExpense" onclick="setModalType('Expense')" class="flex-1 py-2 text-xs font-bold rounded-lg bg-rose-600 text-white transition">💸 Expense</button>
+                    <button type="button" id="modalTypeIncome" onclick="setModalType('Income')" class="flex-1 py-2 text-xs font-bold rounded-lg text-slate-500 transition">💰 Income</button>
+                </div>
+
+                <!-- Amount -->
+                <div>
+                    <label class="block text-[11px] font-bold uppercase mb-1" style="color: #7A6F68;">Amount (₹)</label>
+                    <input type="number" step="0.01" id="modalAmount" placeholder="0.00" class="w-full px-4 py-2.5 rounded-xl border border-[#E5E4E2] font-extrabold text-lg focus:outline-none focus:border-[#6F4E37]" style="background: #FAF9F7; color: #2E1E14;" />
+                </div>
+
+                <!-- Category -->
+                <div>
+                    <label class="block text-[11px] font-bold uppercase mb-1" style="color: #7A6F68;">Category</label>
+                    <select id="modalCategory" class="w-full px-3 py-2.5 rounded-xl border border-[#E5E4E2] text-xs font-semibold focus:outline-none focus:border-[#6F4E37]" style="background: #FAF9F7; color: #2E1E14;">
+                        <option value="Food &amp; Dining">🍔 Food &amp; Dining</option>
+                        <option value="Groceries">🛒 Groceries</option>
+                        <option value="Rent &amp; Housing">🏠 Rent &amp; Housing</option>
+                        <option value="Travel &amp; Fuel">🚗 Travel &amp; Fuel</option>
+                        <option value="Utilities &amp; Bills">⚡ Utilities &amp; Bills</option>
+                        <option value="Shopping">🛍️ Shopping</option>
+                        <option value="Healthcare">💊 Healthcare</option>
+                        <option value="Salary">💼 Salary / Bonus</option>
+                        <option value="Other">📦 Other</option>
+                    </select>
+                </div>
+
+                <!-- Payment Mode -->
+                <div>
+                    <label class="block text-[11px] font-bold uppercase mb-1" style="color: #7A6F68;">Payment Mode</label>
+                    <div class="grid grid-cols-3 gap-2">
+                        <button type="button" onclick="setModalPayMode('UPI')" id="modalPayUPI" class="py-2 text-xs font-bold rounded-lg text-white" style="background: #6F4E37;">UPI</button>
+                        <button type="button" onclick="setModalPayMode('Card')" id="modalPayCard" class="py-2 text-xs font-bold rounded-lg btn-platinum">Card</button>
+                        <button type="button" onclick="setModalPayMode('Cash')" id="modalPayCash" class="py-2 text-xs font-bold rounded-lg btn-platinum">Cash</button>
+                    </div>
+                </div>
+
+                <!-- Notes -->
+                <div>
+                    <label class="block text-[11px] font-bold uppercase mb-1" style="color: #7A6F68;">Notes / Description</label>
+                    <input type="text" id="modalNotes" placeholder="e.g. Dinner with team, Cement order..." class="w-full px-3 py-2 rounded-xl border border-[#E5E4E2] text-xs focus:outline-none focus:border-[#6F4E37]" style="background: #FAF9F7; color: #2E1E14;" />
+                </div>
+            </div>
+
+            <div class="pt-2 flex items-center gap-2.5">
+                <button type="button" onclick="submitTransaction()" id="modalSubmitBtn" class="flex-1 py-3 btn-coffee text-xs font-extrabold rounded-xl transition">
+                    Sync to Salesforce ☁️
+                </button>
+                <button type="button" onclick="closeAddModal()" class="px-4 py-3 btn-platinum text-xs font-bold rounded-xl">
+                    Cancel
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ========================================================= -->
+    <!-- 7. APPLICATION LOGIC AND CHARTS JAVASCRIPT                -->
+    <!-- ========================================================= -->
+    <script>
+        const sessionId = '{!$Api.Session_ID}';
+    </script>
+    <script>
+    //<![CDATA[
+        let rawRecords = [];
+        let currentTypeFilter = 'All';
+        let barChartInstance = null;
+        let donutChartInstance = null;
+        let modalEntryType = 'Expense';
+        let modalPayMode = 'UPI';
+
+        const CATEGORY_ICONS = {
+            'Food & Dining': '🍔',
+            'Groceries': '🛒',
+            'Rent & Housing': '🏠',
+            'Travel & Fuel': '🚗',
+            'Utilities & Bills': '⚡',
+            'Shopping': '🛍️',
+            'Healthcare': '💊',
+            'Entertainment': '🎬',
+            'Salary': '💼',
+            'Investment': '📈',
+            'Other': '📦'
+        };
+
+        async function fetchRecords() {
+            const refreshIcon = document.getElementById('refreshIcon');
+            if (refreshIcon) refreshIcon.classList.add('animate-spin');
+
+            try {
+                const soql = encodeURIComponent(
+                    'SELECT Id, Name, Type__c, Amount__c, Category__c, Transaction_Date__c, Payment_Mode__c, Notes__c, CreatedDate ' +
+                    'FROM Daily_Transaction__c ' +
+                    'ORDER BY Transaction_Date__c DESC, CreatedDate DESC LIMIT 200'
+                );
+
+                const response = await fetch('/services/data/v60.0/query?q=' + soql, {
+                    headers: { 'Authorization': 'Bearer ' + sessionId }
+                });
+
+                if (!response.ok) {
+                    throw new Error('Salesforce Query Error: ' + response.statusText);
+                }
+
+                const data = await response.json();
+                rawRecords = data.records || [];
+                renderDashboard();
+            } catch (err) {
+                console.error(err);
+                document.getElementById('recordsBody').innerHTML = 
+                    '<tr><td colspan="6" class="p-6 text-center text-rose-600 font-bold">Failed to load live data: ' + err.message + '</td></tr>';
+            } finally {
+                if (refreshIcon) refreshIcon.classList.remove('animate-spin');
+            }
+        }
+
+        function renderDashboard() {
+            let totalIncome = 0;
+            let totalExpense = 0;
+            let upiTotal = 0, upiCount = 0;
+            let cardTotal = 0, cardCount = 0;
+            let cashTotal = 0, cashCount = 0;
+            let incomeCount = 0, expenseCount = 0;
+            const categoryExpenses = {};
+            const uniqueDates = new Set();
+
+            rawRecords.forEach(r => {
+                const amt = parseFloat(r.Amount__c || 0);
+                const type = (r.Type__c || 'Expense').trim().toLowerCase();
+                const cat = (r.Category__c || 'Other').trim();
+                const pay = (r.Payment_Mode__c || 'UPI').trim().toLowerCase();
+                if (r.Transaction_Date__c) uniqueDates.add(r.Transaction_Date__c);
+
+                if (type === 'income') {
+                    totalIncome += amt;
+                    incomeCount++;
+                } else {
+                    totalExpense += amt;
+                    expenseCount++;
+                    categoryExpenses[cat] = (categoryExpenses[cat] || 0) + amt;
+
+                    // Outflow ONLY for payment mode breakdown (prevents 23k bug)
+                    if (pay.includes('card')) {
+                        cardTotal += amt; cardCount++;
+                    } else if (pay.includes('cash')) {
+                        cashTotal += amt; cashCount++;
+                    } else {
+                        upiTotal += amt; upiCount++;
+                    }
+                }
+            });
+
+            // 1. Metric Cards
+            document.getElementById('totIncome').innerText = '₹' + totalIncome.toLocaleString('en-IN', {minimumFractionDigits: 2});
+            document.getElementById('totExpense').innerText = '₹' + totalExpense.toLocaleString('en-IN', {minimumFractionDigits: 2});
+            document.getElementById('totIncomeCount').innerText = incomeCount + ' Inflow Records';
+            document.getElementById('totExpenseCount').innerText = expenseCount + ' Outflow Records';
+
+            const netBalance = totalIncome - totalExpense;
+            const netElem = document.getElementById('netBalance');
+            netElem.innerText = (netBalance >= 0 ? '+' : '-') + '₹' + Math.abs(netBalance).toLocaleString('en-IN', {minimumFractionDigits: 2});
+
+            const savingsRate = totalIncome > 0 ? Math.round((netBalance / totalIncome) * 100) : 0;
+            document.getElementById('savingsRate').innerText = savingsRate + '% Savings Rate';
+            document.getElementById('balanceStatus').innerText = netBalance >= 0 ? 'Surplus' : 'Deficit';
+
+            // 2. Top Category & Daily Average Spend (Accurate Real Analytics)
+            const sortedCategories = Object.entries(categoryExpenses).sort((a, b) => b[1] - a[1]);
+            if (sortedCategories.length > 0) {
+                const [topCat, topAmt] = sortedCategories[0];
+                const pct = totalExpense > 0 ? Math.round((topAmt / totalExpense) * 100) : 0;
+                document.getElementById('topCategoryName').innerText = (CATEGORY_ICONS[topCat] || '📦') + ' ' + topCat;
+                document.getElementById('topCategoryAmount').innerText = '₹' + topAmt.toLocaleString('en-IN', {minimumFractionDigits: 2}) + ' (' + pct + '% of expenses)';
+            } else {
+                document.getElementById('topCategoryName').innerText = 'No Expenses';
+                document.getElementById('topCategoryAmount').innerText = '₹0.00';
+            }
+
+            const activeDays = Math.max(uniqueDates.size, 1);
+            const dailyAvg = totalExpense / activeDays;
+            document.getElementById('dailyAverageSpend').innerText = 'Avg ₹' + Math.round(dailyAvg).toLocaleString('en-IN') + ' / active day';
+
+            // 3. Payment Mode Cards (Exclusive of Income)
+            document.getElementById('upiTotal').innerText = '₹' + upiTotal.toLocaleString('en-IN', {minimumFractionDigits: 2});
+            document.getElementById('upiCount').innerText = upiCount + ' Records';
+            document.getElementById('cardTotal').innerText = '₹' + cardTotal.toLocaleString('en-IN', {minimumFractionDigits: 2});
+            document.getElementById('cardCount').innerText = cardCount + ' Records';
+            document.getElementById('cashTotal').innerText = '₹' + cashTotal.toLocaleString('en-IN', {minimumFractionDigits: 2});
+            document.getElementById('cashCount').innerText = cashCount + ' Records';
+
+            // 4. Render Charts
+            renderCharts(totalIncome, totalExpense, categoryExpenses);
+
+            // 5. Render Table
+            filterTable();
+        }
+
+        function renderCharts(income, expense, categoryExpenses) {
+            // Chart 1: Bar Chart (Coffee and Rose Terracotta)
+            const barCtx = document.getElementById('barChart');
+            if (barChartInstance) barChartInstance.destroy();
+
+            barChartInstance = new Chart(barCtx, {
+                type: 'bar',
+                data: {
+                    labels: ['Income (Inflow)', 'Expenses (Outflow)'],
+                    datasets: [{
+                        data: [income, expense],
+                        backgroundColor: ['#6F4E37', '#D87070'],
+                        borderRadius: 12,
+                        borderSkipped: false,
+                        barThickness: 56
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            backgroundColor: '#2E1E14',
+                            titleColor: '#E5E4E2',
+                            bodyColor: '#FFFFFF',
+                            borderColor: '#E5E4E2',
+                            borderWidth: 1,
+                            padding: 12,
+                            callbacks: {
+                                label: ctx => ' ₹' + ctx.raw.toLocaleString('en-IN', {minimumFractionDigits: 2})
+                            }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            grid: { display: false },
+                            ticks: { color: '#6F4E37', font: { weight: 'bold', size: 11 } }
+                        },
+                        y: {
+                            grid: { color: 'rgba(229, 228, 226, 0.7)' },
+                            ticks: {
+                                color: '#7A6F68',
+                                callback: val => '₹' + val.toLocaleString('en-IN')
+                            }
+                        }
+                    }
+                }
+            });
+
+            // Chart 2: Category Donut Chart (Chic Coffee, Lavender, and Platinum Palette)
+            const donutCtx = document.getElementById('donutChart');
+            if (donutChartInstance) donutChartInstance.destroy();
+
+            const catLabels = Object.keys(categoryExpenses);
+            const catValues = Object.values(categoryExpenses);
+            document.getElementById('catTotalBadge').innerText = catLabels.length + ' Categories';
+
+            const luxuryPalette = ['#6F4E37', '#9C7A97', '#A37B5C', '#B8A9C9', '#C8B6A6', '#D6CEE5', '#523826'];
+
+            donutChartInstance = new Chart(donutCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: catLabels.length ? catLabels : ['No Expenses'],
+                    datasets: [{
+                        data: catValues.length ? catValues : [1],
+                        backgroundColor: catValues.length ? luxuryPalette.slice(0, catLabels.length) : ['#E5E4E2'],
+                        borderWidth: 3,
+                        borderColor: '#FFFFFF'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    cutout: '72%',
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: {
+                                color: '#6F4E37',
+                                boxWidth: 12,
+                                padding: 14,
+                                font: { size: 11, weight: 'bold' }
+                            }
+                        },
+                        tooltip: {
+                            backgroundColor: '#2E1E14',
+                            titleColor: '#E5E4E2',
+                            bodyColor: '#FFFFFF',
+                            borderColor: '#E5E4E2',
+                            borderWidth: 1,
+                            padding: 12,
+                            callbacks: {
+                                label: ctx => ' ' + ctx.label + ': ₹' + Number(ctx.raw).toLocaleString('en-IN', {minimumFractionDigits: 2})
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        function filterTable() {
+            const query = (document.getElementById('searchInput').value || '').trim().toLowerCase();
+            const tbody = document.getElementById('recordsBody');
+
+            const filtered = rawRecords.filter(r => {
+                const type = (r.Type__c || 'Expense').toLowerCase();
+                if (currentTypeFilter !== 'All' && type !== currentTypeFilter.toLowerCase()) {
+                    return false;
+                }
+                if (query) {
+                    const cat = (r.Category__c || '').toLowerCase();
+                    const note = (r.Notes__c || '').toLowerCase();
+                    const name = (r.Name || '').toLowerCase();
+                    const pay = (r.Payment_Mode__c || '').toLowerCase();
+                    const amt = (r.Amount__c || '').toString();
+                    return cat.includes(query) || note.includes(query) || name.includes(query) || pay.includes(query) || amt.includes(query);
+                }
+                return true;
+            });
+
+            document.getElementById('tableRecordCount').innerText = filtered.length + ' / ' + rawRecords.length + ' Total';
+
+            if (!filtered.length) {
+                tbody.innerHTML = `<tr><td colspan="6" class="p-8 text-center text-slate-400">
+                    <div class="text-3xl mb-2">🔍</div>
+                    <div class="font-bold" style="color: #6F4E37;">No matching transactions found</div>
+                    <div class="text-xs text-slate-500 mt-1">Try clearing your search keyword or switching filters.</div>
+                </td></tr>`;
+                return;
+            }
+
+            tbody.innerHTML = filtered.map(r => {
+                const isInc = (r.Type__c || '').toLowerCase() === 'income';
+                const cat = r.Category__c || 'Other';
+                const icon = CATEGORY_ICONS[cat] || '📦';
+                const amtFormatted = parseFloat(r.Amount__c || 0).toLocaleString('en-IN', {minimumFractionDigits: 2});
+                const dateStr = r.Transaction_Date__c || (r.CreatedDate ? r.CreatedDate.split('T')[0] : 'N/A');
+
+                return `<tr class="hover:bg-[#FAF8FD] transition">
+                    <td class="px-6 py-4">
+                        <a href="/${r.Id}" target="_blank" class="font-bold hover:underline flex items-center gap-1.5" style="color: #6F4E37;">
+                            <span>${r.Name || 'Record'}</span>
+                            <span class="text-[10px] text-slate-400">↗</span>
+                        </a>
+                        <div class="text-[11px] text-slate-400 mt-0.5">${dateStr}</div>
+                    </td>
+                    <td class="px-6 py-4">
+                        <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-[11px] font-extrabold ${isInc ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : 'bg-rose-50 text-rose-700 border border-rose-200'}">
+                            ${isInc ? '↓ Income' : '↑ Expense'}
+                        </span>
+                    </td>
+                    <td class="px-6 py-4">
+                        <div class="flex items-center gap-2">
+                            <span class="w-7 h-7 rounded-lg flex items-center justify-center text-sm" style="background: #E6E0F0; border: 1px solid #D6CEE5;">${icon}</span>
+                            <span class="font-bold" style="color: #2E1E14;">${cat}</span>
+                        </div>
+                    </td>
+                    <td class="px-6 py-4">
+                        <span class="px-2.5 py-1 rounded-md text-[10px] font-extrabold" style="background: #F4F3F1; color: #6F4E37; border: 1px solid #E5E4E2;">
+                            ${r.Payment_Mode__c || 'UPI'}
+                        </span>
+                    </td>
+                    <td class="px-6 py-4 text-xs max-w-xs truncate" style="color: #7A6F68;">
+                        ${r.Notes__c || '<span class="text-slate-400 italic">No notes</span>'}
+                    </td>
+                    <td class="px-6 py-4 text-right">
+                        <span class="text-sm font-black ${isInc ? 'text-emerald-700' : 'text-[#2E1E14]'}">
+                            ${isInc ? '+' : '-'}₹${amtFormatted}
+                        </span>
+                    </td>
+                </tr>`;
+            }).join('');
+        }
+
+        function setTypeFilter(type) {
+            currentTypeFilter = type;
+            ['All', 'Income', 'Expense'].forEach(t => {
+                const btn = document.getElementById('filter' + t);
+                if (t === type) {
+                    btn.className = 'px-3 py-1.5 rounded-lg text-white transition font-bold';
+                    btn.style.background = '#6F4E37';
+                    btn.style.color = '#FFFFFF';
+                } else {
+                    btn.className = 'px-3 py-1.5 rounded-lg transition font-bold';
+                    btn.style.background = 'transparent';
+                    btn.style.color = '#7A6F68';
+                }
+            });
+            filterTable();
+        }
+
+        function exportCSV() {
+            if (!rawRecords.length) {
+                alert('No records available to export.');
+                return;
+            }
+            let csv = 'ID,Name,Type,Category,Amount,Payment_Mode,Transaction_Date,Notes\n';
+            rawRecords.forEach(r => {
+                csv += `"${r.Id}","${r.Name || ''}","${r.Type__c || ''}","${r.Category__c || ''}",${r.Amount__c || 0},"${r.Payment_Mode__c || ''}","${r.Transaction_Date__c || ''}","${(r.Notes__c || '').replace(/"/g, '""')}"\n`;
+            });
+            const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = `Salesforce_Transactions_${new Date().toISOString().slice(0, 10)}.csv`;
+            link.click();
+        }
+
+        function refreshData() {
+            fetchRecords();
+        }
+
+        // Modal Functions
+        function openAddModal() {
+            document.getElementById('modalAmount').value = '';
+            document.getElementById('modalNotes').value = '';
+            setModalType('Expense');
+            setModalPayMode('UPI');
+            document.getElementById('addModal').classList.remove('hidden');
+        }
+
+        function closeAddModal() {
+            document.getElementById('addModal').classList.add('hidden');
+        }
+
+        function setModalType(type) {
+            modalEntryType = type;
+            const expBtn = document.getElementById('modalTypeExpense');
+            const incBtn = document.getElementById('modalTypeIncome');
+            if (type === 'Expense') {
+                expBtn.className = 'flex-1 py-2 text-xs font-bold rounded-lg bg-rose-600 text-white transition';
+                incBtn.className = 'flex-1 py-2 text-xs font-bold rounded-lg text-slate-500 transition';
+            } else {
+                incBtn.className = 'flex-1 py-2 text-xs font-bold rounded-lg bg-emerald-600 text-white transition';
+                expBtn.className = 'flex-1 py-2 text-xs font-bold rounded-lg text-slate-500 transition';
+            }
+        }
+
+        function setModalPayMode(mode) {
+            modalPayMode = mode;
+            ['UPI', 'Card', 'Cash'].forEach(m => {
+                const btn = document.getElementById('modalPay' + m);
+                if (m === mode) {
+                    btn.className = 'py-2 text-xs font-bold rounded-lg text-white';
+                    btn.style.background = '#6F4E37';
+                } else {
+                    btn.className = 'py-2 text-xs font-bold rounded-lg btn-platinum';
+                    btn.style.background = '#FFFFFF';
+                }
+            });
+        }
+
+        async function submitTransaction() {
+            const amtStr = document.getElementById('modalAmount').value;
+            const amt = parseFloat(amtStr);
+            if (!amt || amt <= 0) {
+                alert('Please enter a valid amount greater than ₹0.');
+                return;
+            }
+
+            const cat = document.getElementById('modalCategory').value;
+            const notes = document.getElementById('modalNotes').value;
+            const submitBtn = document.getElementById('modalSubmitBtn');
+            submitBtn.disabled = true;
+            submitBtn.innerText = 'Syncing...';
+
+            const payload = {
+                Type__c: modalEntryType,
+                Amount__c: amt,
+                Category__c: cat,
+                Payment_Mode__c: modalPayMode,
+                Notes__c: notes,
+                Transaction_Date__c: new Date().toISOString().slice(0, 10)
+            };
+
+            try {
+                const res = await fetch('/services/data/v60.0/sobjects/Daily_Transaction__c', {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': 'Bearer ' + sessionId,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(payload)
+                });
+
+                if (res.ok) {
+                    closeAddModal();
+                    fetchRecords();
+                } else {
+                    const errData = await res.json();
+                    alert('Salesforce Error: ' + JSON.stringify(errData));
+                }
+            } catch (e) {
+                alert('Network Error: ' + e.message);
+            } finally {
+                submitBtn.disabled = false;
+                submitBtn.innerText = 'Sync to Salesforce ☁️';
+            }
+        }
+
+        // Initialize on load
+        fetchRecords();
+    //]]>
+    </script>
+</body>
+</html>
+</apex:page>

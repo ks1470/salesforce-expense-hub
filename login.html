@@ -1,0 +1,408 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Salesforce Executive Access | Custom Portal</title>
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Google Fonts: Plus Jakarta Sans -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --color-coffee: #6F4E37;
+      --color-coffee-dark: #3F2A1D;
+      --color-coffee-deep: #2A1B12;
+      --color-coffee-light: #8E684D;
+      --color-platinum: #E5E4E2;
+      --color-platinum-light: #F8F7F5;
+      --color-lavender: #E6E0F0;
+      --color-lavender-dark: #7A6990;
+      --color-text-main: #2E1E14;
+      --color-text-muted: #7A6F68;
+    }
+
+    body {
+      font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+      background: #F8F7F5;
+      color: var(--color-text-main);
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    /* Ambient background mesh */
+    .bg-ambient {
+      background: 
+        radial-gradient(circle at 10% 20%, rgba(230, 224, 240, 0.7) 0%, transparent 40%),
+        radial-gradient(circle at 90% 80%, rgba(111, 78, 55, 0.08) 0%, transparent 50%),
+        #FBFBFA;
+    }
+
+    .card-glass {
+      background: rgba(255, 255, 255, 0.95);
+      backdrop-filter: blur(16px);
+      border: 1.5px solid var(--color-platinum);
+      box-shadow: 0 20px 50px -10px rgba(111, 78, 55, 0.12), 0 4px 16px -2px rgba(0, 0, 0, 0.03);
+    }
+
+    .pill-lavender {
+      background: var(--color-lavender);
+      color: var(--color-coffee);
+      border: 1px solid #D6CEE5;
+    }
+
+    .btn-coffee-glow {
+      background: linear-gradient(135deg, #6F4E37 0%, #4D3321 100%);
+      color: #FFFFFF;
+      box-shadow: 0 10px 25px -4px rgba(111, 78, 55, 0.4);
+      transition: all 0.25s ease;
+    }
+
+    .btn-coffee-glow:hover {
+      background: linear-gradient(135deg, #5B402D 0%, #3B2618 100%);
+      transform: translateY(-2px);
+      box-shadow: 0 14px 30px -4px rgba(111, 78, 55, 0.55);
+    }
+
+    .btn-platinum {
+      background: #FFFFFF;
+      color: var(--color-coffee);
+      border: 1.5px solid var(--color-platinum);
+      transition: all 0.2s ease;
+    }
+
+    .btn-platinum:hover {
+      background: #FAF9F8;
+      border-color: #D2CFCC;
+      transform: translateY(-1px);
+    }
+
+    .input-luxury {
+      background: #FAF9F8;
+      border: 1.5px solid var(--color-platinum);
+      transition: all 0.2s ease;
+    }
+
+    .input-luxury:focus {
+      background: #FFFFFF;
+      border-color: var(--color-coffee);
+      outline: none;
+      box-shadow: 0 0 0 4px rgba(111, 78, 55, 0.12);
+    }
+
+    .floating-badge {
+      animation: float 4s ease-in-out infinite;
+    }
+
+    .floating-badge-delayed {
+      animation: float 4s ease-in-out 2s infinite;
+    }
+
+    @keyframes float {
+      0%, 100% { transform: translateY(0px); }
+      50% { transform: translateY(-8px); }
+    }
+  </style>
+</head>
+<body class="bg-ambient min-h-screen flex items-center justify-center p-4 sm:p-6 lg:p-10">
+
+  <!-- Toast Notification -->
+  <div id="toast" class="fixed top-6 right-6 z-50 transform translate-x-full transition-transform duration-300 ease-in-out px-6 py-3.5 rounded-2xl shadow-2xl border text-xs font-bold flex items-center space-x-2"></div>
+
+  <!-- Main Container: Split-screen Luxury Card -->
+  <div class="w-full max-w-5xl card-glass rounded-[32px] overflow-hidden shadow-2xl grid grid-cols-1 lg:grid-cols-12 min-h-[640px]">
+    
+    <!-- Left Column: Custom Login Controls (7 cols) -->
+    <div class="lg:col-span-7 p-6 sm:p-10 lg:p-12 flex flex-col justify-between">
+      
+      <!-- Top Brand Row -->
+      <div>
+        <div class="flex items-center justify-between">
+          <div class="flex items-center space-x-3">
+            <div class="w-12 h-12 rounded-2xl flex items-center justify-center text-white text-2xl shadow-lg shadow-[#6F4E37]/30" style="background: linear-gradient(135deg, #6F4E37 0%, #4D3321 100%);">
+              ☁️
+            </div>
+            <div>
+              <div class="flex items-center gap-2">
+                <span class="text-xs font-black uppercase tracking-wider" style="color: #6F4E37;">Salesforce Direct</span>
+                <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-extrabold pill-lavender">
+                  <span class="w-1.5 h-1.5 rounded-full bg-[#6F4E37] animate-pulse"></span>
+                  Custom Gateway
+                </span>
+              </div>
+              <h2 class="text-lg font-black tracking-tight text-slate-900">Executive Finance Portal</h2>
+            </div>
+          </div>
+
+          <a href="/" class="hidden sm:inline-flex text-xs font-bold px-3 py-1.5 rounded-xl btn-platinum">
+            Web App →
+          </a>
+        </div>
+
+        <div class="mt-8">
+          <h1 class="text-2xl sm:text-3xl font-black tracking-tight" style="color: #2E1E14;">
+            Sign In to Salesforce
+          </h1>
+          <p class="text-xs sm:text-sm font-medium mt-1.5" style="color: #7A6F68;">
+            Zero default Salesforce screens. Direct encrypted session launch.
+          </p>
+        </div>
+
+        <!-- Target Destination Selector -->
+        <div class="mt-6">
+          <label class="block text-[11px] font-black uppercase tracking-wider mb-2" style="color: #6F4E37;">
+            Select Landing Page
+          </label>
+          <div class="relative">
+            <select id="destination" class="w-full px-4 py-3.5 rounded-2xl text-xs font-bold text-slate-900 input-luxury appearance-none cursor-pointer">
+              <option value="/apex/Daily_Expense_Dashboard">📊 Daily Expense Dashboard (Visualforce)</option>
+              <option value="/lightning/page/home">⚡ Salesforce Lightning Home</option>
+              <option value="/lightning/o/Daily_Transaction__c/list">📑 Daily Transactions Custom Object</option>
+              <option value="/lightning/setup/SetupOneHome/home">⚙️ Salesforce Setup Console</option>
+            </select>
+            <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-4" style="color: #6F4E37;">
+              ▼
+            </div>
+          </div>
+        </div>
+
+        <!-- Action 1: 1-Click Fast Gateway (Hero Action) -->
+        <div class="mt-5">
+          <button id="instantBtn" onclick="launchDirectSession()" class="w-full py-4 px-6 btn-coffee-glow rounded-2xl font-black text-sm flex items-center justify-center space-x-2.5">
+            <span>⚡ 1-Click Instant Login (Bypass Standard Page)</span>
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>
+          </button>
+          <div class="flex items-center justify-between text-[11px] font-bold text-slate-500 mt-2 px-1">
+            <span>Verified Admin Session: <strong id="connectedUserLabel" style="color: #6F4E37;">kuldeep.jangid...</strong></span>
+            <span class="text-emerald-600 flex items-center gap-1">● Direct Token</span>
+          </div>
+        </div>
+
+        <!-- Custom Divider -->
+        <div class="relative my-7">
+          <div class="absolute inset-0 flex items-center">
+            <div class="w-full border-t" style="border-color: var(--color-platinum);"></div>
+          </div>
+          <div class="relative flex justify-center text-xs">
+            <span class="px-4 bg-white text-[10px] font-black uppercase tracking-widest" style="color: #7A6F68;">Or Sign In With Salesforce Account</span>
+          </div>
+        </div>
+
+        <!-- Action 2: Credentials Form -->
+        <form id="credentialsForm" onsubmit="handleCredentialsLogin(event)" class="space-y-4">
+          <div>
+            <label for="username" class="block text-xs font-bold text-slate-700 mb-1">Salesforce Username</label>
+            <input type="email" id="username" required placeholder="username@salesforce.com" class="w-full px-4 py-3 rounded-2xl text-xs font-bold text-slate-900 input-luxury">
+          </div>
+
+          <div>
+            <div class="flex items-center justify-between mb-1">
+              <label for="password" class="block text-xs font-bold text-slate-700">Password / Token</label>
+              <button type="button" onclick="togglePassword()" class="text-[11px] font-extrabold hover:underline" style="color: #6F4E37;">Show Password</button>
+            </div>
+            <input type="password" id="password" required placeholder="Enter Salesforce Password" class="w-full px-4 py-3 rounded-2xl text-xs font-bold text-slate-900 input-luxury">
+          </div>
+
+          <button type="submit" id="credentialsBtn" class="w-full py-3.5 px-4 btn-platinum rounded-2xl font-black text-xs flex items-center justify-center space-x-2">
+            <span>Sign In to Salesforce Org</span>
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1"/></svg>
+          </button>
+        </form>
+      </div>
+
+      <!-- Bottom Status Bar -->
+      <div class="mt-8 pt-4 border-t flex items-center justify-between text-xs" style="border-color: var(--color-platinum);">
+        <div class="flex items-center space-x-2">
+          <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+          <span class="text-[11px] font-bold text-slate-500 truncate max-w-[220px]" id="orgDomainLabel">Connecting...</span>
+        </div>
+        <div class="flex items-center space-x-3 text-[11px] font-bold" style="color: #6F4E37;">
+          <a href="/mobile" target="_blank" class="hover:underline">📱 Mobile View</a>
+          <span>•</span>
+          <a href="/" class="hover:underline">Expense Manager</a>
+        </div>
+      </div>
+    </div>
+
+    <!-- Right Column: Luxury Brand Visuals (5 cols) -->
+    <div class="lg:col-span-5 p-8 sm:p-10 flex flex-col justify-between relative overflow-hidden text-white" style="background: linear-gradient(145deg, #6F4E37 0%, #4D3321 50%, #2A1B12 100%);">
+      
+      <!-- Background Ambient Glows -->
+      <div class="absolute -top-20 -right-20 w-64 h-64 rounded-full bg-[#8E684D]/30 blur-3xl pointer-events-none"></div>
+      <div class="absolute -bottom-20 -left-20 w-64 h-64 rounded-full bg-[#E6E0F0]/15 blur-3xl pointer-events-none"></div>
+
+      <!-- Top Badge -->
+      <div class="relative z-10 flex items-center justify-between">
+        <span class="text-[10px] font-black uppercase tracking-widest px-3 py-1 rounded-full bg-white/10 border border-white/20 backdrop-blur-md">
+          Enterprise Financials
+        </span>
+        <span class="text-xl">✨</span>
+      </div>
+
+      <!-- Middle Floating Stats Cards -->
+      <div class="relative z-10 my-8 space-y-4">
+        
+        <!-- Floating Card 1 -->
+        <div class="floating-badge bg-white/10 border border-white/20 backdrop-blur-md rounded-2xl p-4 shadow-xl">
+          <div class="flex items-center space-x-3">
+            <div class="w-10 h-10 rounded-xl bg-white/20 flex items-center justify-center text-lg">
+              💳
+            </div>
+            <div>
+              <div class="text-[10px] font-black uppercase tracking-wider text-white/70">Real-Time Sync</div>
+              <div class="text-sm font-extrabold text-white">Daily_Transaction__c</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Floating Card 2 -->
+        <div class="floating-badge-delayed bg-white/10 border border-white/20 backdrop-blur-md rounded-2xl p-4 shadow-xl">
+          <div class="flex items-center space-x-3">
+            <div class="w-10 h-10 rounded-xl bg-white/20 flex items-center justify-center text-lg">
+              ⚡
+            </div>
+            <div>
+              <div class="text-[10px] font-black uppercase tracking-wider text-white/70">Salesforce Apex Trigger</div>
+              <div class="text-sm font-extrabold text-white">Automated Budget Guardrails</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Floating Card 3 -->
+        <div class="bg-white/10 border border-white/20 backdrop-blur-md rounded-2xl p-4 shadow-xl">
+          <div class="flex items-center space-x-3">
+            <div class="w-10 h-10 rounded-xl bg-white/20 flex items-center justify-center text-lg">
+              💎
+            </div>
+            <div>
+              <div class="text-[10px] font-black uppercase tracking-wider text-white/70">Visualforce Dashboard</div>
+              <div class="text-sm font-extrabold text-white">#6F4E37 &amp; #E6E0F0 Design</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Bottom Headline -->
+      <div class="relative z-10">
+        <h3 class="text-xl font-black leading-tight text-white">
+          Complete Control Over Expenses &amp; Cash Flow
+        </h3>
+        <p class="text-xs text-white/75 mt-2 leading-relaxed">
+          Integrated directly with your Salesforce Developer Org. Real-time updates, custom triggers, and zero friction access.
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    let connectedUser = 'Admin User';
+    let orgDomain = '';
+
+    async function initAuth() {
+      try {
+        const res = await fetch('/api/auth/info');
+        if (res.ok) {
+          const data = await res.json();
+          connectedUser = data.connected_user || 'Admin User';
+          orgDomain = data.org_domain || '';
+          document.getElementById('connectedUserLabel').innerText = connectedUser;
+          document.getElementById('orgDomainLabel').innerText = orgDomain || 'Salesforce Org Connected';
+          document.getElementById('username').value = connectedUser;
+        }
+      } catch (err) {
+        console.warn('Could not load auth info:', err);
+      }
+    }
+
+    function togglePassword() {
+      const p = document.getElementById('password');
+      p.type = p.type === 'password' ? 'text' : 'password';
+    }
+
+    function showToast(msg, isSuccess = true) {
+      const toast = document.getElementById('toast');
+      toast.innerText = msg;
+      toast.className = `fixed top-6 right-6 z-50 transition-transform duration-300 ease-in-out px-6 py-3.5 rounded-2xl shadow-2xl border text-xs font-bold flex items-center space-x-2 ${
+        isSuccess ? 'bg-emerald-50 text-emerald-800 border-emerald-200' : 'bg-rose-50 text-rose-800 border-rose-200'
+      }`;
+      toast.classList.remove('translate-x-full');
+      setTimeout(() => {
+        toast.classList.add('translate-x-full');
+      }, 4000);
+    }
+
+    async function launchDirectSession() {
+      const btn = document.getElementById('instantBtn');
+      const dest = document.getElementById('destination').value;
+      
+      btn.disabled = true;
+      btn.innerHTML = `
+        <svg class="animate-spin -ml-1 mr-2 h-4 w-4 text-white" fill="none" viewBox="0 0 24 24">
+          <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+          <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path>
+        </svg>
+        <span>Launching Salesforce Directly...</span>
+      `;
+
+      try {
+        const res = await fetch(`/api/auth/frontdoor?retURL=${encodeURIComponent(dest)}`);
+        const data = await res.json();
+        
+        if (res.ok && data.frontdoor_url) {
+          showToast('✅ Session Established! Redirecting directly into Salesforce...', true);
+          setTimeout(() => {
+            window.location.href = data.frontdoor_url;
+          }, 800);
+        } else {
+          showToast(`❌ Error: ${data.error || 'Failed to establish session'}`, false);
+          btn.disabled = false;
+          btn.innerHTML = `<span>⚡ 1-Click Instant Login (Bypass Standard Page)</span>`;
+        }
+      } catch (err) {
+        showToast(`❌ Network error: ${err.message}`, false);
+        btn.disabled = false;
+        btn.innerHTML = `<span>⚡ 1-Click Instant Login (Bypass Standard Page)</span>`;
+      }
+    }
+
+    async function handleCredentialsLogin(e) {
+      e.preventDefault();
+      const btn = document.getElementById('credentialsBtn');
+      const dest = document.getElementById('destination').value;
+      const username = document.getElementById('username').value;
+      const password = document.getElementById('password').value;
+
+      btn.disabled = true;
+      btn.innerHTML = `<span>Authenticating with Salesforce...</span>`;
+
+      try {
+        const res = await fetch('/api/auth/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ username, password, retURL: dest })
+        });
+
+        const data = await res.json();
+        if (res.ok && data.frontdoor_url) {
+          showToast('✅ Verified! Redirecting directly into Salesforce...', true);
+          setTimeout(() => {
+            window.location.href = data.frontdoor_url;
+          }, 800);
+        } else {
+          showToast(`❌ Login Failed: ${data.error || 'Invalid credentials'}`, false);
+          btn.disabled = false;
+          btn.innerHTML = `<span>Sign In to Salesforce Org</span>`;
+        }
+      } catch (err) {
+        showToast(`❌ Network error: ${err.message}`, false);
+        btn.disabled = false;
+        btn.innerHTML = `<span>Sign In to Salesforce Org</span>`;
+      }
+    }
+
+    initAuth();
+  </script>
+</body>
+</html>

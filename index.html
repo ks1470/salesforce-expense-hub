@@ -1,0 +1,631 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Salesforce Expense &amp; Income Tracker</title>
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <!-- Google Fonts: Plus Jakarta Sans -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --color-coffee: #6F4E37;
+      --color-coffee-dark: #4D3321;
+      --color-coffee-light: #8E684D;
+      --color-platinum: #E5E4E2;
+      --color-platinum-light: #F8F7F5;
+      --color-lavender: #E6E0F0;
+      --color-lavender-dark: #7A6990;
+      --color-text-main: #2E1E14;
+      --color-text-muted: #7A6F68;
+    }
+
+    body {
+      font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+      background: linear-gradient(135deg, #FBFBFA 0%, #F5F2F8 50%, #ECE8EE 100%);
+      color: var(--color-text-main);
+      min-height: 100vh;
+    }
+
+    .card-surface {
+      background: #FFFFFF;
+      border: 1.5px solid var(--color-platinum);
+      box-shadow: 0 8px 30px -4px rgba(111, 78, 55, 0.06), 0 2px 6px -1px rgba(0, 0, 0, 0.02);
+      transition: all 0.25s ease;
+    }
+
+    .card-surface:hover {
+      border-color: #D2CFCC;
+      box-shadow: 0 12px 36px -4px rgba(111, 78, 55, 0.1);
+    }
+
+    .card-hero-coffee {
+      background: linear-gradient(135deg, #6F4E37 0%, #4D3321 100%);
+      border: 1px solid rgba(229, 228, 226, 0.35);
+      box-shadow: 0 12px 32px -4px rgba(111, 78, 55, 0.35);
+      color: #FFFFFF;
+    }
+
+    .pill-lavender {
+      background: var(--color-lavender);
+      color: var(--color-coffee);
+      border: 1px solid #D6CEE5;
+    }
+
+    .btn-coffee {
+      background: linear-gradient(135deg, #6F4E37 0%, #523825 100%);
+      color: #FFFFFF;
+      box-shadow: 0 6px 18px -2px rgba(111, 78, 55, 0.3);
+      transition: all 0.2s ease;
+    }
+
+    .btn-coffee:hover {
+      background: linear-gradient(135deg, #5B402D 0%, #3F291A 100%);
+      transform: translateY(-1px);
+      box-shadow: 0 8px 22px -2px rgba(111, 78, 55, 0.4);
+    }
+
+    .btn-platinum {
+      background: #FFFFFF;
+      color: var(--color-coffee);
+      border: 1.5px solid var(--color-platinum);
+      transition: all 0.2s ease;
+    }
+
+    .btn-platinum:hover {
+      background: var(--color-platinum-light);
+      border-color: #D2CFCC;
+    }
+
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: #F0EDEB; }
+    ::-webkit-scrollbar-thumb { background: #C5BFBA; border-radius: 3px; }
+    ::-webkit-scrollbar-thumb:hover { background: #9E958E; }
+  </style>
+</head>
+<body class="p-4 sm:p-6 lg:p-8">
+
+  <div class="max-w-7xl mx-auto space-y-6">
+
+    <!-- Top Navbar / Header -->
+    <header class="card-surface p-5 sm:p-6 rounded-3xl flex flex-col md:flex-row md:items-center justify-between gap-4">
+      <div class="flex items-center space-x-4">
+        <div class="w-12 h-12 rounded-2xl flex items-center justify-center text-white text-2xl shadow-lg shadow-[#6F4E37]/30" style="background: linear-gradient(135deg, #6F4E37 0%, #4D3321 100%);">
+          ☁️
+        </div>
+        <div>
+          <div class="flex items-center gap-2.5">
+            <h1 class="text-xl sm:text-2xl font-black tracking-tight" style="color: #2E1E14;">Expense &amp; Income Tracker</h1>
+            <span class="inline-flex items-center gap-1.5 px-3 py-0.5 rounded-full text-[11px] font-extrabold pill-lavender">
+              <span class="w-1.5 h-1.5 rounded-full bg-[#6F4E37] animate-pulse"></span>
+              Connected to Salesforce
+            </span>
+          </div>
+          <p class="text-xs sm:text-sm font-medium mt-0.5" style="color: #7A6F68;">
+            Synced in Real-time with <code class="px-1.5 py-0.5 rounded font-mono font-bold" style="background: #E6E0F0; color: #6F4E37;">Daily_Transaction__c</code>
+          </p>
+        </div>
+      </div>
+      
+      <div class="flex items-center space-x-3">
+        <a href="/login" class="text-xs px-4 py-2.5 rounded-xl font-bold transition flex items-center space-x-1.5 pill-lavender hover:opacity-90">
+          <span>🔐 Custom Login</span>
+        </a>
+        <a href="/mobile" target="_blank" class="text-xs px-4 py-2.5 rounded-xl btn-platinum font-bold transition flex items-center space-x-1.5 hover:opacity-90">
+          <span>📱 Mobile</span>
+        </a>
+        <button id="refreshBtn" onclick="loadDashboard()" class="text-xs px-4 py-2.5 rounded-xl btn-platinum font-bold flex items-center space-x-1.5">
+          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+          <span>Refresh</span>
+        </button>
+        <a id="sfOrgLink" href="/login" class="text-xs px-4 py-2.5 rounded-xl btn-coffee font-bold flex items-center space-x-1.5">
+          <span>Salesforce Direct</span>
+          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg>
+        </a>
+      </div>
+    </header>
+
+    <!-- Notification Toast -->
+    <div id="toast" class="fixed top-6 right-6 z-50 transform translate-x-full transition-transform duration-300 ease-in-out px-5 py-3 rounded-2xl shadow-xl border text-xs font-bold flex items-center space-x-2"></div>
+
+    <!-- KPI Summary Cards -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+      <!-- Total Income -->
+      <div class="card-surface rounded-3xl p-6 relative overflow-hidden">
+        <div class="flex items-center justify-between">
+          <span class="text-xs font-extrabold uppercase tracking-wider" style="color: #2E7D32;">Total Income</span>
+          <div class="w-9 h-9 rounded-xl flex items-center justify-center font-bold text-sm" style="background: #E8F5E9; color: #2E7D32;">
+            ↓
+          </div>
+        </div>
+        <div class="mt-4">
+          <div id="kpiIncome" class="text-2xl sm:text-3xl font-black text-slate-900">₹0.00</div>
+          <p class="text-xs font-medium mt-1" style="color: #7A6F68;">Total credits &amp; salary</p>
+        </div>
+      </div>
+
+      <!-- Total Expense -->
+      <div class="card-surface rounded-3xl p-6 relative overflow-hidden">
+        <div class="flex items-center justify-between">
+          <span class="text-xs font-extrabold uppercase tracking-wider" style="color: #C62828;">Total Expenses</span>
+          <div class="w-9 h-9 rounded-xl flex items-center justify-center font-bold text-sm" style="background: #FFEBEE; color: #C62828;">
+            ↑
+          </div>
+        </div>
+        <div class="mt-4">
+          <div id="kpiExpense" class="text-2xl sm:text-3xl font-black text-slate-900">₹0.00</div>
+          <p class="text-xs font-medium mt-1" style="color: #7A6F68;">Total money debited</p>
+        </div>
+      </div>
+
+      <!-- Net Balance / Savings (Hero Coffee Card) -->
+      <div class="card-hero-coffee rounded-3xl p-6 relative overflow-hidden">
+        <div class="flex items-center justify-between">
+          <span class="text-xs font-extrabold uppercase tracking-wider text-white/90">Net Savings</span>
+          <div class="w-9 h-9 rounded-xl flex items-center justify-center font-bold text-sm bg-white/20 text-white backdrop-blur-sm">
+            💎
+          </div>
+        </div>
+        <div class="mt-4">
+          <div id="kpiBalance" class="text-2xl sm:text-3xl font-black text-white">₹0.00</div>
+          <p id="kpiSavingsRate" class="text-xs font-bold text-white/80 mt-1">Savings Rate: 0%</p>
+        </div>
+      </div>
+
+      <!-- Total Transactions -->
+      <div class="card-surface rounded-3xl p-6 relative overflow-hidden">
+        <div class="flex items-center justify-between">
+          <span class="text-xs font-extrabold uppercase tracking-wider" style="color: #6F4E37;">Total Entries</span>
+          <div class="w-9 h-9 rounded-xl flex items-center justify-center font-bold text-sm pill-lavender">
+            📑
+          </div>
+        </div>
+        <div class="mt-4">
+          <div id="kpiCount" class="text-2xl sm:text-3xl font-black text-slate-900">0</div>
+          <p class="text-xs font-medium mt-1" style="color: #7A6F68;">All records in Salesforce</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Middle Section: Form (Left) & Charts (Right) -->
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+      
+      <!-- Transaction Input Form (5 cols) -->
+      <div class="lg:col-span-5 card-surface rounded-3xl p-6 sm:p-7">
+        <div class="flex items-center justify-between pb-4 border-b" style="border-color: var(--color-platinum);">
+          <div>
+            <h2 class="text-base font-extrabold text-slate-900">Add New Entry</h2>
+            <p class="text-xs font-medium" style="color: #7A6F68;">Directly syncs to Salesforce custom object</p>
+          </div>
+          <span class="px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-wider pill-lavender">REST API</span>
+        </div>
+
+        <form id="entryForm" onsubmit="submitTransaction(event)" class="mt-5 space-y-4">
+          <!-- Type Toggle: Income vs Expense -->
+          <div>
+            <label class="block text-xs font-bold text-slate-700 mb-1.5">Entry Type</label>
+            <div class="grid grid-cols-2 gap-2 p-1.5 rounded-2xl" style="background: #F4F3F1; border: 1px solid var(--color-platinum);">
+              <button type="button" id="btnTypeExpense" onclick="setType('Expense')" class="py-2.5 text-xs font-black rounded-xl transition shadow-sm bg-rose-600 text-white">
+                🔴 Expense
+              </button>
+              <button type="button" id="btnTypeIncome" onclick="setType('Income')" class="py-2.5 text-xs font-black rounded-xl transition text-slate-600 hover:text-slate-900">
+                🟢 Income
+              </button>
+            </div>
+            <input type="hidden" id="entryType" value="Expense">
+          </div>
+
+          <!-- Amount -->
+          <div>
+            <label for="amount" class="block text-xs font-bold text-slate-700 mb-1">Amount (₹)</label>
+            <div class="relative">
+              <span class="absolute inset-y-0 left-0 pl-4 flex items-center font-bold text-lg" style="color: #6F4E37;">₹</span>
+              <input type="number" step="0.01" min="0.01" id="amount" required placeholder="0.00" class="w-full pl-10 pr-4 py-3 rounded-2xl text-lg font-black text-slate-900 focus:bg-white focus:outline-none transition" style="background: #FAF9F8; border: 1.5px solid var(--color-platinum);">
+            </div>
+          </div>
+
+          <!-- Category & Date Grid -->
+          <div class="grid grid-cols-2 gap-3">
+            <div>
+              <label for="category" class="block text-xs font-bold text-slate-700 mb-1">Category</label>
+              <select id="category" class="w-full px-3.5 py-3 rounded-2xl text-xs font-bold text-slate-800 focus:bg-white focus:outline-none transition" style="background: #FAF9F8; border: 1.5px solid var(--color-platinum);">
+                <!-- Dynamically filled -->
+              </select>
+            </div>
+
+            <div>
+              <label for="date" class="block text-xs font-bold text-slate-700 mb-1">Date</label>
+              <input type="date" id="date" required class="w-full px-3.5 py-3 rounded-2xl text-xs font-bold text-slate-800 focus:bg-white focus:outline-none transition" style="background: #FAF9F8; border: 1.5px solid var(--color-platinum);">
+            </div>
+          </div>
+
+          <!-- Payment Mode -->
+          <div>
+            <label for="paymentMode" class="block text-xs font-bold text-slate-700 mb-1">Payment Mode</label>
+            <select id="paymentMode" class="w-full px-3.5 py-3 rounded-2xl text-xs font-bold text-slate-800 focus:bg-white focus:outline-none transition" style="background: #FAF9F8; border: 1.5px solid var(--color-platinum);">
+              <option value="UPI">UPI (Google Pay / PhonePe / Paytm)</option>
+              <option value="Cash">Cash</option>
+              <option value="Debit Card">Debit Card</option>
+              <option value="Credit Card">Credit Card</option>
+              <option value="Net Banking">Net Banking</option>
+            </select>
+          </div>
+
+          <!-- Notes -->
+          <div>
+            <label for="notes" class="block text-xs font-bold text-slate-700 mb-1">Description / Notes</label>
+            <textarea id="notes" rows="2" placeholder="e.g. Grocery shopping, Salary credited..." class="w-full px-3.5 py-3 rounded-2xl text-xs font-medium text-slate-800 focus:bg-white focus:outline-none transition" style="background: #FAF9F8; border: 1.5px solid var(--color-platinum);"></textarea>
+          </div>
+
+          <!-- Submit Button -->
+          <button type="submit" id="submitBtn" class="w-full py-3.5 px-4 btn-coffee rounded-2xl font-black text-sm flex items-center justify-center space-x-2">
+            <span>Send to Salesforce</span>
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>
+          </button>
+        </form>
+      </div>
+
+      <!-- Charts / Report Dashboard (7 cols) -->
+      <div class="lg:col-span-7 space-y-6">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+          <!-- Doughnut Chart: Expenses by Category -->
+          <div class="card-surface rounded-3xl p-6 flex flex-col">
+            <div class="flex items-center justify-between mb-3">
+              <h3 class="text-xs font-black uppercase tracking-wider" style="color: #6F4E37;">Expenses by Category</h3>
+              <span class="w-2 h-2 rounded-full" style="background: #6F4E37;"></span>
+            </div>
+            <div class="flex-1 flex items-center justify-center min-h-[220px]">
+              <canvas id="categoryChart"></canvas>
+            </div>
+          </div>
+
+          <!-- Bar Chart: Income vs Expense Comparison -->
+          <div class="card-surface rounded-3xl p-6 flex flex-col">
+            <div class="flex items-center justify-between mb-3">
+              <h3 class="text-xs font-black uppercase tracking-wider" style="color: #6F4E37;">Income vs Expense Split</h3>
+              <span class="w-2 h-2 rounded-full" style="background: #E6E0F0;"></span>
+            </div>
+            <div class="flex-1 flex items-center justify-center min-h-[220px]">
+              <canvas id="comparisonChart"></canvas>
+            </div>
+          </div>
+        </div>
+
+        <!-- Salesforce Live Sync Banner -->
+        <div class="rounded-3xl p-6 flex items-center justify-between" style="background: linear-gradient(135deg, #6F4E37 0%, #4D3321 100%); color: white; border: 1px solid rgba(229, 228, 226, 0.35);">
+          <div class="space-y-1">
+            <div class="flex items-center space-x-2">
+              <span class="text-[10px] font-black uppercase tracking-wider px-2.5 py-0.5 rounded-full pill-lavender">Salesforce Apex Trigger Active</span>
+              <span class="text-xs font-bold text-white/90">DailyTransactionTrigger</span>
+            </div>
+            <p class="text-xs text-white/80">Automated budget alerts &amp; task creations are running live in your Salesforce Org.</p>
+          </div>
+          <div class="text-right pl-4">
+            <span class="text-[11px] font-bold text-white/70 uppercase tracking-wider">Synced Records</span>
+            <div id="bannerCount" class="text-2xl font-black text-white">0</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Recent Transactions Table -->
+    <div class="card-surface rounded-3xl overflow-hidden">
+      <div class="p-6 border-b flex flex-col md:flex-row md:items-center justify-between gap-4" style="border-color: var(--color-platinum);">
+        <div>
+          <h2 class="text-base font-extrabold text-slate-900">Recent Transactions (Live from Salesforce)</h2>
+          <p class="text-xs font-medium" style="color: #7A6F68;">Fetched directly via SOQL</p>
+        </div>
+
+        <!-- Filter Controls -->
+        <div class="flex items-center space-x-2">
+          <button onclick="filterTable('all')" class="filter-pill text-xs px-3.5 py-2 rounded-xl font-bold transition btn-coffee" data-filter="all">All</button>
+          <button onclick="filterTable('Income')" class="filter-pill text-xs px-3.5 py-2 rounded-xl font-bold transition btn-platinum" data-filter="Income">Income</button>
+          <button onclick="filterTable('Expense')" class="filter-pill text-xs px-3.5 py-2 rounded-xl font-bold transition btn-platinum" data-filter="Expense">Expenses</button>
+        </div>
+      </div>
+
+      <!-- Table -->
+      <div class="overflow-x-auto">
+        <table class="w-full text-left text-xs">
+          <thead class="text-slate-500 uppercase tracking-wider font-extrabold border-b" style="background: #FAF9F8; border-color: var(--color-platinum);">
+            <tr>
+              <th class="px-6 py-4">ID / Date</th>
+              <th class="px-6 py-4">Type</th>
+              <th class="px-6 py-4">Category</th>
+              <th class="px-6 py-4">Description</th>
+              <th class="px-6 py-4">Payment</th>
+              <th class="px-6 py-4 text-right">Amount (₹)</th>
+              <th class="px-6 py-4 text-center">Action</th>
+            </tr>
+          </thead>
+          <tbody id="transactionsTbody" class="divide-y font-semibold" style="border-color: var(--color-platinum);">
+            <tr>
+              <td colspan="7" class="px-6 py-10 text-center text-slate-400">Loading transactions from Salesforce...</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    let allTransactions = [];
+    let currentFilter = 'all';
+    let categoryChartInstance = null;
+    let comparisonChartInstance = null;
+    let sfInstanceUrl = '';
+
+    const EXPENSE_CATEGORIES = [
+      'Food & Dining', 'Rent & Housing', 'Groceries', 'Travel & Fuel',
+      'Utilities & Bills', 'Shopping', 'Healthcare', 'Entertainment',
+      'Personal Care', 'Education', 'Investment', 'Other'
+    ];
+
+    const INCOME_CATEGORIES = [
+      'Salary', 'Freelance / Consulting', 'Business Revenue',
+      'Investment Returns', 'Bonus', 'Rental Income', 'Gift', 'Other'
+    ];
+
+    document.getElementById('date').value = new Date().toISOString().split('T')[0];
+
+    function setType(type) {
+      document.getElementById('entryType').value = type;
+      const btnExp = document.getElementById('btnTypeExpense');
+      const btnInc = document.getElementById('btnTypeIncome');
+
+      if (type === 'Expense') {
+        btnExp.className = 'py-2.5 text-xs font-black rounded-xl transition shadow-sm bg-rose-600 text-white';
+        btnInc.className = 'py-2.5 text-xs font-black rounded-xl transition text-slate-600 hover:text-slate-900';
+        populateCategories(EXPENSE_CATEGORIES);
+      } else {
+        btnInc.className = 'py-2.5 text-xs font-black rounded-xl transition shadow-sm bg-emerald-600 text-white';
+        btnExp.className = 'py-2.5 text-xs font-black rounded-xl transition text-slate-600 hover:text-slate-900';
+        populateCategories(INCOME_CATEGORIES);
+      }
+    }
+
+    function populateCategories(cats) {
+      const select = document.getElementById('category');
+      select.innerHTML = cats.map(c => `<option value="${c}">${c}</option>`).join('');
+    }
+
+    function showToast(msg, isSuccess = true) {
+      const toast = document.getElementById('toast');
+      toast.innerText = msg;
+      toast.className = `fixed top-6 right-6 z-50 transition-transform duration-300 ease-in-out px-5 py-3 rounded-2xl shadow-xl border text-xs font-bold flex items-center space-x-2 ${
+        isSuccess ? 'bg-emerald-50 text-emerald-800 border-emerald-200' : 'bg-rose-50 text-rose-800 border-rose-200'
+      }`;
+      toast.classList.remove('translate-x-full');
+      setTimeout(() => {
+        toast.classList.add('translate-x-full');
+      }, 3500);
+    }
+
+    async function submitTransaction(e) {
+      e.preventDefault();
+      const submitBtn = document.getElementById('submitBtn');
+      submitBtn.disabled = true;
+      submitBtn.innerHTML = `
+        <svg class="animate-spin -ml-1 mr-2 h-4 w-4 text-white" fill="none" viewBox="0 0 24 24">
+          <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+          <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path>
+        </svg>
+        <span>Saving to Salesforce...</span>
+      `;
+
+      const payload = {
+        type: document.getElementById('entryType').value,
+        amount: parseFloat(document.getElementById('amount').value),
+        category: document.getElementById('category').value,
+        date: document.getElementById('date').value,
+        payment_mode: document.getElementById('paymentMode').value,
+        notes: document.getElementById('notes').value
+      };
+
+      try {
+        const res = await fetch('/api/transactions', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+
+        const data = await res.json();
+        if (res.ok) {
+          showToast('✅ Saved successfully to Salesforce!', true);
+          document.getElementById('amount').value = '';
+          document.getElementById('notes').value = '';
+          await loadDashboard();
+        } else {
+          showToast(`❌ Error: ${data.error || 'Failed to save'}`, false);
+        }
+      } catch (err) {
+        showToast(`❌ Network error: ${err.message}`, false);
+      } finally {
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = `
+          <span>Send to Salesforce</span>
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>
+        `;
+      }
+    }
+
+    async function deleteTransaction(id) {
+      if (!confirm('Are you sure you want to delete this record from Salesforce?')) return;
+
+      try {
+        const res = await fetch(`/api/transactions/${id}`, { method: 'DELETE' });
+        if (res.ok) {
+          showToast('Record deleted from Salesforce', true);
+          await loadDashboard();
+        } else {
+          const err = await res.json();
+          showToast(`Delete failed: ${err.error}`, false);
+        }
+      } catch (err) {
+        showToast(`Error: ${err.message}`, false);
+      }
+    }
+
+    async function loadDashboard() {
+      try {
+        const sumRes = await fetch('/api/summary');
+        const summary = await sumRes.json();
+        
+        sfInstanceUrl = summary.instance_url || '';
+        document.getElementById('sfOrgLink').href = sfInstanceUrl;
+
+        document.getElementById('kpiIncome').innerText = '₹' + summary.total_income.toLocaleString('en-IN', { minimumFractionDigits: 2 });
+        document.getElementById('kpiExpense').innerText = '₹' + summary.total_expense.toLocaleString('en-IN', { minimumFractionDigits: 2 });
+        
+        const balanceEl = document.getElementById('kpiBalance');
+        balanceEl.innerText = '₹' + summary.net_balance.toLocaleString('en-IN', { minimumFractionDigits: 2 });
+
+        const savingsRate = summary.total_income > 0 
+          ? ((summary.net_balance / summary.total_income) * 100).toFixed(1)
+          : 0;
+        document.getElementById('kpiSavingsRate').innerText = `Savings Rate: ${savingsRate}%`;
+
+        document.getElementById('kpiCount').innerText = summary.total_count;
+        document.getElementById('bannerCount').innerText = summary.total_count;
+
+        updateCharts(summary);
+
+        const listRes = await fetch('/api/transactions');
+        const listData = await listRes.json();
+        allTransactions = listData.records || [];
+        renderTable();
+
+      } catch (err) {
+        console.error('Failed to load dashboard:', err);
+      }
+    }
+
+    function updateCharts(summary) {
+      const expCats = summary.expense_by_category || {};
+      const catLabels = Object.keys(expCats);
+      const catValues = Object.values(expCats);
+
+      const ctxCat = document.getElementById('categoryChart').getContext('2d');
+      if (categoryChartInstance) categoryChartInstance.destroy();
+
+      categoryChartInstance = new Chart(ctxCat, {
+        type: 'doughnut',
+        data: {
+          labels: catLabels.length ? catLabels : ['No Expenses Yet'],
+          datasets: [{
+            data: catValues.length ? catValues : [1],
+            backgroundColor: [
+              '#6F4E37', '#8E684D', '#B5947C', '#CDB5A5',
+              '#7A6990', '#9585AA', '#B3A6C5', '#D2C8DF',
+              '#4D3321', '#E5E4E2'
+            ]
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: { position: 'bottom', labels: { boxWidth: 10, font: { size: 10, weight: 'bold' } } }
+          }
+        }
+      });
+
+      const ctxComp = document.getElementById('comparisonChart').getContext('2d');
+      if (comparisonChartInstance) comparisonChartInstance.destroy();
+
+      comparisonChartInstance = new Chart(ctxComp, {
+        type: 'bar',
+        data: {
+          labels: ['Total Income', 'Total Expense'],
+          datasets: [{
+            label: 'Amount (₹)',
+            data: [summary.total_income, summary.total_expense],
+            backgroundColor: ['#2E7D32', '#6F4E37'],
+            borderRadius: 12
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: { display: false }
+          },
+          scales: {
+            y: { beginAtZero: true, grid: { color: '#E5E4E2' } },
+            x: { grid: { display: false } }
+          }
+        }
+      });
+    }
+
+    function filterTable(filter) {
+      currentFilter = filter;
+      document.querySelectorAll('.filter-pill').forEach(btn => {
+        if (btn.dataset.filter === filter) {
+          btn.className = 'filter-pill text-xs px-3.5 py-2 rounded-xl font-bold transition btn-coffee';
+        } else {
+          btn.className = 'filter-pill text-xs px-3.5 py-2 rounded-xl font-bold transition btn-platinum';
+        }
+      });
+      renderTable();
+    }
+
+    function renderTable() {
+      const tbody = document.getElementById('transactionsTbody');
+      const filtered = allTransactions.filter(r => {
+        if (currentFilter === 'all') return true;
+        return (r.Type__c || '').toLowerCase() === currentFilter.toLowerCase();
+      });
+
+      if (!filtered.length) {
+        tbody.innerHTML = `
+          <tr>
+            <td colspan="7" class="px-6 py-12 text-center text-slate-400">
+              No transactions found. Add your first income or expense above!
+            </td>
+          </tr>
+        `;
+        return;
+      }
+
+      tbody.innerHTML = filtered.map(r => {
+        const isIncome = (r.Type__c || '').toLowerCase() === 'income';
+        const typeBadge = isIncome
+          ? `<span class="px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-wider" style="background: #E8F5E9; color: #2E7D32;">🟢 Income</span>`
+          : `<span class="px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-wider" style="background: #E6E0F0; color: #6F4E37;">🔴 Expense</span>`;
+
+        const amountFormatted = (isIncome ? '+' : '-') + '₹' + parseFloat(r.Amount__c || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 });
+        const amountClass = isIncome ? 'text-[#2E7D32] font-black' : 'text-[#6F4E37] font-black';
+        const sfLink = sfInstanceUrl ? `${sfInstanceUrl}/${r.Id}` : '#';
+
+        return `
+          <tr class="hover:bg-[#FAF9F8] transition">
+            <td class="px-6 py-4 whitespace-nowrap">
+              <a href="${sfLink}" target="_blank" class="font-extrabold hover:underline" style="color: #6F4E37;">${r.Name || 'TRX'}</a>
+              <div class="text-[11px]" style="color: #7A6F68;">${r.Transaction_Date__c || ''}</div>
+            </td>
+            <td class="px-6 py-4 whitespace-nowrap">${typeBadge}</td>
+            <td class="px-6 py-4 whitespace-nowrap font-bold text-slate-800">${r.Category__c || 'General'}</td>
+            <td class="px-6 py-4 max-w-xs truncate text-slate-600">${r.Notes__c || '-'}</td>
+            <td class="px-6 py-4 whitespace-nowrap font-bold" style="color: #7A6F68;">${r.Payment_Mode__c || 'UPI'}</td>
+            <td class="px-6 py-4 whitespace-nowrap text-right ${amountClass}">${amountFormatted}</td>
+            <td class="px-6 py-4 whitespace-nowrap text-center">
+              <button onclick="deleteTransaction('${r.Id}')" title="Delete from Salesforce" class="p-2 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-xl transition">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+              </button>
+            </td>
+          </tr>
+        `;
+      }).join('');
+    }
+
+    setType('Expense');
+    loadDashboard();
+  </script>
+</body>
+</html>

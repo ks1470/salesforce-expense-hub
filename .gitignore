@@ -1,0 +1,11 @@
+.env
+__pycache__/
+*.pyc
+node_modules/
+**/node_modules/
+.expo/
+**/.expo/
+*.apk
+SalesforceExpenseApp/
+SalesforceExpenseSDK/
+.DS_Store

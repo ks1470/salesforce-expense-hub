@@ -235,12 +235,14 @@ class ExpenseTrackerServer(BaseHTTPRequestHandler):
             data = json.loads(body)
             username = data.get("username", "").strip()
             password = data.get("password", "").strip()
+            security_token = data.get("security_token", "").strip()
             ret_url = data.get("retURL", "/apex/Daily_Expense_Dashboard").strip() or "/apex/Daily_Expense_Dashboard"
 
             sf = self.get_sf()
 
             # 1. If password is provided, authenticate with Salesforce
             if password:
+                full_password = f"{password}{security_token}"
                 soap_body = f"""<?xml version="1.0" encoding="utf-8" ?>
 <env:Envelope xmlns:xsd="http://www.w3.org/2001/XMLSchema"
     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
@@ -248,7 +250,7 @@ class ExpenseTrackerServer(BaseHTTPRequestHandler):
   <env:Body>
     <n1:login xmlns:n1="urn:partner.soap.sforce.com">
       <n1:username>{username}</n1:username>
-      <n1:password>{password}</n1:password>
+      <n1:password>{full_password}</n1:password>
     </n1:login>
   </env:Body>
 </env:Envelope>"""

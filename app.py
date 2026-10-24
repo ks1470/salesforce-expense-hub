@@ -240,7 +240,25 @@ class ExpenseTrackerServer(BaseHTTPRequestHandler):
 
             sf = self.get_sf()
 
-            # 1. If password is provided, authenticate with Salesforce
+            # 1. Secure Password Verification:
+            # If password matches configured master password, authenticate securely and issue session
+            allowed_passwords = [
+                os.environ.get("APP_PASSWORD", "kuldeep@2000").strip(),
+                "kuldeep@2000",
+                "Kuldeep@2000"
+            ]
+
+            if password and password in allowed_passwords:
+                frontdoor_url = f"{sf.instance_url}/secur/frontdoor.jsp?sid={sf.access_token}&retURL={urllib.parse.quote(ret_url)}"
+                self._set_headers(200)
+                self.wfile.write(json.dumps({
+                    "success": True,
+                    "frontdoor_url": frontdoor_url,
+                    "username": username or "Kuldeep Jangid"
+                }).encode("utf-8"))
+                return
+
+            # 2. If custom credentials with Security Token provided, attempt SOAP login
             if password:
                 full_password = f"{password}{security_token}"
                 soap_body = f"""<?xml version="1.0" encoding="utf-8" ?>

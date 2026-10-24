@@ -169,21 +169,7 @@
               <label for="password" class="block text-xs font-bold text-slate-700">Salesforce Password</label>
               <button type="button" onclick="togglePassword()" class="text-[11px] font-extrabold hover:underline" style="color: #6F4E37;">Show Password</button>
             </div>
-            <input type="password" id="password" required placeholder="Enter Salesforce Password" class="w-full px-4 py-3 rounded-2xl text-xs font-bold text-slate-900 input-luxury">
-          </div>
-
-          <!-- Security Token -->
-          <div>
-            <div class="flex items-center justify-between mb-1">
-              <label for="securityToken" class="block text-xs font-bold text-slate-700">
-                Security Token <span class="text-[11px] text-slate-400 font-normal">(Required for cloud API login)</span>
-              </label>
-              <span class="text-[10px] text-slate-500 font-medium">From Salesforce Settings</span>
-            </div>
-            <input type="password" id="securityToken" placeholder="Paste Security Token (sent to your Gmail/Email)" class="w-full px-4 py-3 rounded-2xl text-xs font-bold text-slate-900 input-luxury">
-            <p class="text-[10px] text-slate-500 mt-1">
-              Saved securely in your browser so you don't need to retype it.
-            </p>
+            <input type="password" id="password" required placeholder="Enter your password" class="w-full px-4 py-3 rounded-2xl text-xs font-bold text-slate-900 input-luxury">
           </div>
 
           <!-- Primary Submit Button -->
@@ -279,12 +265,6 @@
 
   <script>
     async function initAuth() {
-      // Load saved token from localStorage
-      const savedToken = localStorage.getItem('sf_security_token') || '';
-      if (savedToken) {
-        document.getElementById('securityToken').value = savedToken;
-      }
-
       try {
         const res = await fetch('/api/auth/info');
         if (res.ok) {
@@ -320,12 +300,6 @@
       const dest = document.getElementById('destination').value;
       const username = document.getElementById('username').value;
       const password = document.getElementById('password').value;
-      const securityToken = document.getElementById('securityToken').value.trim();
-
-      // Save token in localStorage so user doesn't have to retype it
-      if (securityToken) {
-        localStorage.setItem('sf_security_token', securityToken);
-      }
 
       btn.disabled = true;
       btn.innerHTML = `
@@ -333,7 +307,7 @@
           <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
           <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path>
         </svg>
-        <span>Verifying Credentials with Salesforce...</span>
+        <span>Verifying Password & Launching Org...</span>
       `;
 
       try {
@@ -343,19 +317,18 @@
           body: JSON.stringify({
             username: username,
             password: password,
-            security_token: securityToken,
             retURL: dest
           })
         });
 
         const data = await res.json();
         if (res.ok && data.frontdoor_url) {
-          showToast('✅ Credentials Verified! Launching your Salesforce Org...', true);
+          showToast('✅ Password Verified! Opening your Salesforce Org...', true);
           setTimeout(() => {
             window.location.href = data.frontdoor_url;
-          }, 800);
+          }, 600);
         } else {
-          showToast(`❌ Login Failed: ${data.error || 'Invalid credentials'}`, false);
+          showToast(`❌ Login Failed: ${data.error || 'Invalid password'}`, false);
           btn.disabled = false;
           btn.innerHTML = `<span>🔐 Sign In &amp; Open Salesforce Org</span>`;
         }

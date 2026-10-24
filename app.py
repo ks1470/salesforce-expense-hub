@@ -254,46 +254,53 @@ class ExpenseTrackerServer(BaseHTTPRequestHandler):
     </n1:login>
   </env:Body>
 </env:Envelope>"""
-                soap_url = f"{sf.my_domain_url.rstrip('/')}/services/Soap/u/59.0"
-                req = urllib.request.Request(
-                    soap_url,
-                    data=soap_body.encode("utf-8"),
-                    headers={"Content-Type": "text/xml; charset=UTF-8", "SOAPAction": "login"},
-                    method="POST"
-                )
-                try:
-                    with urllib.request.urlopen(req) as resp:
-                        xml_text = resp.read().decode("utf-8")
-                        root = ET.fromstring(xml_text)
-                        ns = {"soapenv": "http://schemas.xmlsoap.org/soap/envelope/", "urn": "urn:partner.soap.sforce.com"}
-                        session_id_el = root.find(".//urn:sessionId", ns)
-                        server_url_el = root.find(".//urn:serverUrl", ns)
-                        if session_id_el is not None and session_id_el.text:
-                            sid = session_id_el.text
-                            server_url = server_url_el.text if server_url_el is not None else sf.instance_url
-                            parsed_split = urllib.parse.urlsplit(server_url)
-                            inst = f"{parsed_split.scheme}://{parsed_split.netloc}"
-                            frontdoor_url = f"{inst}/secur/frontdoor.jsp?sid={sid}&retURL={urllib.parse.quote(ret_url)}"
-                            self._set_headers(200)
-                            self.wfile.write(json.dumps({
-                                "success": True,
-                                "frontdoor_url": frontdoor_url,
-                                "username": username
-                            }).encode("utf-8"))
-                            return
-                except urllib.error.HTTPError as he:
-                    err_xml = he.read().decode("utf-8")
-                    err_msg = "Invalid Salesforce credentials"
+                endpoints = [
+                    f"{sf.my_domain_url.rstrip('/')}/services/Soap/u/59.0",
+                    "https://login.salesforce.com/services/Soap/u/59.0"
+                ]
+                last_err = "Invalid Salesforce credentials"
+                for soap_url in endpoints:
+                    req = urllib.request.Request(
+                        soap_url,
+                        data=soap_body.encode("utf-8"),
+                        headers={"Content-Type": "text/xml; charset=UTF-8", "SOAPAction": "login"},
+                        method="POST"
+                    )
                     try:
-                        root = ET.fromstring(err_xml)
-                        fault = root.find(".//faultstring")
-                        if fault is not None and fault.text:
-                            err_msg = fault.text
-                    except Exception:
-                        pass
-                    self._set_headers(401)
-                    self.wfile.write(json.dumps({"error": err_msg}).encode("utf-8"))
-                    return
+                        with urllib.request.urlopen(req) as resp:
+                            xml_text = resp.read().decode("utf-8")
+                            root = ET.fromstring(xml_text)
+                            ns = {"soapenv": "http://schemas.xmlsoap.org/soap/envelope/", "urn": "urn:partner.soap.sforce.com"}
+                            session_id_el = root.find(".//urn:sessionId", ns)
+                            server_url_el = root.find(".//urn:serverUrl", ns)
+                            if session_id_el is not None and session_id_el.text:
+                                sid = session_id_el.text
+                                server_url = server_url_el.text if server_url_el is not None else sf.instance_url
+                                parsed_split = urllib.parse.urlsplit(server_url)
+                                inst = f"{parsed_split.scheme}://{parsed_split.netloc}"
+                                frontdoor_url = f"{inst}/secur/frontdoor.jsp?sid={sid}&retURL={urllib.parse.quote(ret_url)}"
+                                self._set_headers(200)
+                                self.wfile.write(json.dumps({
+                                    "success": True,
+                                    "frontdoor_url": frontdoor_url,
+                                    "username": username
+                                }).encode("utf-8"))
+                                return
+                    except urllib.error.HTTPError as he:
+                        err_xml = he.read().decode("utf-8")
+                        try:
+                            root = ET.fromstring(err_xml)
+                            fault = root.find(".//faultstring")
+                            if fault is not None and fault.text:
+                                last_err = fault.text
+                        except Exception:
+                            pass
+                    except Exception as e:
+                        last_err = str(e)
+
+                self._set_headers(401)
+                self.wfile.write(json.dumps({"error": last_err}).encode("utf-8"))
+                return
 
             # 2. If no password provided (instant 1-click admin login)
             frontdoor_url = f"{sf.instance_url}/secur/frontdoor.jsp?sid={sf.access_token}&retURL={urllib.parse.quote(ret_url)}"
